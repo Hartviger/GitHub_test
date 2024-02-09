@@ -132,7 +132,6 @@ class_7_merged <- lab_dataset_merged[, c("Compound.Name", class_7_columns)]
 
 
 
-
 #P_value calculation local on R
 # Assuming class_5 and class_6 are data frames that contain the same lipids 
 # in the same order and that the first column is "Compound.Name"
