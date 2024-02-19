@@ -269,7 +269,81 @@ pcaplot <- function(data, class, islog) {
   )
   return(pca)
 }
-#Heatmap
+# Heatmap 
+
+
+# Function to extract patterns from compound names
+# Removes all noise from compound name, so name and length is the only left: eg. going from "CAR 14:1'CAR'[M+H]+" to "CAR 14:1"
+extract_pattern <- function(name) {
+  
+  # Pattern to find first part consisting of letters and numbers with a colon or a letter before the numbers
+  pattern <- "([A-Za-z]+\\s[0-9]+:[0-9]+)|([A-Za-z]+\\s[[:alpha:]]?-?[0-9]+:[0-9]+)"
+  matches <- regmatches(name, gregexpr(pattern, name))
+  
+  # Returns the first match, or the hole name if no match
+  if (length(matches[[1]]) > 0) {
+    return(matches[[1]][1])
+  } else {
+    return(name)
+  }
+}
+
+# Function to format strings
+# Puts the length and double bonds numbers into a (). Eg "CAR 14:1" to "CAR(14:1)"
+format_strings <- function(input_strings) {
+  # Use gsub with regular expression to remove all whitespace characters
+  formatted_strings <- gsub("\\s+", "", input_strings)
+  # Add parentheses around the numbers
+  formatted_strings <- gsub("([A-Za-z]*)(\\d+):(\\d+)", "\\1(\\2:\\3)", formatted_strings)
+  return(formatted_strings)
+}
+
+### pattern_column is that corret? 
+# Function to filter rows based on the specified pattern, meaning removes any data that are not on X(C:D) format.
+filter_rows_by_pattern <- function(data, pattern_column) {
+  # Use grepl and regular expressions to filter rows
+  pattern <- "^.+\\(\\d+:\\d+\\)$"  # Regular expression pattern
+  data[grepl(pattern, data[[pattern_column]]), ]
+}
+
+#
+# need duplicated names and _1 _2 to be added.
+#
+
+
+# Function to calculate mean class data
+calculate_class_data <- function(lab_dataset, class_columns) {
+  class_data <- lab_dataset[, c("Compound.Name", class_columns)]
+  class_data$Mean <- rowMeans(class_data[, -1], na.rm = TRUE)
+  return(class_data)
+}
+
+# Function to perform t-test and get p-values
+calculate_p_values <- function(group1_data, group2_data) {
+  reactive_p_values <- reactive({
+    group1_data <- reactive_class_data()[[input$group1]]
+    group2_data <- reactive_class_data()[[input$group2]]
+    
+    # Initialize a vector to store the p-values
+    p_values <- numeric(nrow(group1_data))
+    
+    # Loop through each lipid
+    for (i in 1:nrow(group1_data)) {
+      # Perform the t-test on the ith lipid
+      t_test_result <- t.test(group1_data[i, -1], group2_data[i, -1])  # -1 to exclude "Compound.Name"
+      # Store the p-value
+      p_values[i] <- t_test_result$p.value
+    }
+    
+    # Add p-values to the data frame
+    df <- current_data()
+    df$p_values <- p_values
+    
+    # Return the p-values
+    return(df$p_values)
+  })  
+}
+
 
 
 driftcorrection <- function(dat, seq, method, ntree = 500, degree = 2, QCspan) {

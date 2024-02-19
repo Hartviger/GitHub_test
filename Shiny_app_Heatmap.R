@@ -16,7 +16,7 @@ seq <- read.csv("seq_data_1.csv")
 
 
 #string manipulating 
-#Removes all other than name and length: going from CAR 14:1'CAR'[M+H]+ to Car P-31:2 or Car 11:2
+#Removes all other than name and length: going from CAR 14:1'CAR'[M+H]+ to CAR 14:1
 # Define a function to extract the desired pattern from a name 
 extract_pattern <- function(name) {
   # Pattern to find first part consisting of letters and numbers with a colon or a letter before the numbers
@@ -38,7 +38,7 @@ lab_dataset$Compound.Name <- sapply(lab_dataset$Compound.Name, extract_pattern)
 #View(lab_dataset)
 
 
-#puts the length and doble bonds numbers into a ()
+#puts the length and double bonds numbers into a (), eg. CAR 14:1 to CAR(14:1)
 format_strings <- function(input_strings) {
   # Use gsub with regular expression to remove all whitespace characters
   formatted_strings <- gsub("\\s+", "", input_strings)

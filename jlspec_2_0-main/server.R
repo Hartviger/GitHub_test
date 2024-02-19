@@ -1,6 +1,22 @@
 shinyServer(function(session, input, output) {
   options(shiny.maxRequestSize = 30 * 1024^2)
 
+  output$classDataDebug <- renderPrint({
+    # Access the class data from the reactive expression
+    class_data <- reactive_class_data()
+    
+    # Check if class_data is not NULL or empty before attempting to print it
+    if (!is.null(class_data) && length(class_data) > 0) {
+      str(class_data)
+    } else {
+      print("No class data available")
+    }
+  })
+  
+  # Now that output$classDataDebug has been defined, set its options
+  outputOptions(output, "classDataDebug", suspendWhenHidden = FALSE)
+  
+  
   ## General
   rv <- reactiveValues(data = list(), sequence = list(), activeFile = NULL, 
                   tmpData = NULL, tmpSequence = NULL, 
@@ -31,7 +47,8 @@ shinyServer(function(session, input, output) {
     updateSelectInput(session, "time1", label = NULL, choices = na.omit(rv$sequence[[rv$activeFile]][, 'time']))
     updateSelectInput(session, "time2", label = NULL, choices = na.omit(rv$sequence[[rv$activeFile]][, 'time']))
   })
-
+  #heatmap, utillze observeEvent in statistics... 
+  
   # Functions
 
   initializeVariables <- function() {
@@ -86,6 +103,7 @@ shinyServer(function(session, input, output) {
     row.names(sequence) <- sequence[, 1]
     sequence <- sequence[, -1]
     rv$sequence[[rv$activeFile]] <- sequence
+    #TODO 
   })
 
   observeEvent(input$reuseSequence, {
@@ -899,6 +917,71 @@ shinyServer(function(session, input, output) {
       }
     }
   })
+  
+  
+  
+  reactive_class_data <- reactive({
+    # Retrieve the active sequence and data based on the active file
+    sequence <- rv$sequence[[rv$activeFile]]
+    data <- rv$data[[rv$activeFile]]
+    
+    # The sample names are in the first row of the 'data' dataframe, so we need to use column names
+    sample_names <- colnames(data)
+    
+    # Get the unique classes from the sequence
+    unique_classes <- unique(sequence$class)
+    
+    # Initialize an empty list to store the sample names for each class
+    class_samples_list <- list()
+    
+    for (class in unique_classes) {
+      if (!is.na(class) && class %in% sequence$class) { # Check validity
+        
+        # Get the indices for the current class
+        indices_in_class <- which(sequence$class == class)
+        
+        # Use the indices to get the correct sample names
+        samples_in_class <- sample_names[indices_in_class]
+        
+        # Store the sample names in the list, named by their class
+        class_samples_list[[as.character(class)]] <- samples_in_class
+      }
+    }
+    
+    # Return the list of sample names by class
+    class_samples_list
+  })
+
+  
+  
+  
+  
+  
+  observeEvent(input$run_heatmap, {
+    # Access the active dataset
+    active_dataset <- rv$data[[rv$activeFile]]
+    
+    # Apply the extract_pattern function to the compound names of the active dataset
+    cleaned_names <- lapply(active_dataset$Compound.Name, extract_pattern)
+    
+    # Format the strings of cleaned names
+    formatted_names <- format_strings(cleaned_names)
+    
+    # Update the dataset with the formatted compound names
+    active_dataset$Compound.Name <- formatted_names
+    
+    # Filter the rows based on the pattern
+    filtered_data <- filter_rows_by_pattern(active_dataset, "Compound.Name")
+    
+    # Now filtered_data is ready for plotting the heatmap
+    # You can then proceed to call the plotting function with this cleaned data
+    
+    output$heatmapPlot <- renderPlot({
+      # Your code to plot the heatmap using filtered_data
+    })
+  })
+  
+  
 
   observeEvent(input$run_pca2, {
     selectchoices <- paste(1:length(rv$data), ": ", names(rv$data))

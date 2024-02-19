@@ -19,6 +19,10 @@ library(stringi)
 library(BiocManager)
 library(shinycssloaders)
 library(jsonlite)
+
+library("lipidomeR") #new
+library(readxl) #new
+
 options(repos = BiocManager::repositories())
 source("functions.R")
 source("plotfunctions.R")
@@ -367,38 +371,34 @@ shinyUI(dashboardPage(
                 ))
               ),
             ),
+            
+            #Heatmap
             tabPanel("Heatmap",
-                     fluidPage(
-                       titlePanel("Interactive Heatmap Visualization"),
-                       sidebarLayout(
-                         sidebarPanel(
-                           radioButtons("dataset", "Select data frame:",
-                                        choices = c("Original Data" = "lab_dataset", "Merged Data" = "lab_dataset_merged"),
-                                        selected = "lab_dataset"),
-                           selectInput("group1", "Select group for numerator:",
-                                       choices = c("Class 2" = "class_2", 
-                                                   "Class 3" = "class_3",
-                                                   "Class 4" = "class_4",
-                                                   "Class 5" = "class_5",
-                                                   "Class 6" = "class_6",
-                                                   "Class 7" = "class_7")),
-                           
-                           selectInput("group2", "Select group for denominator:",
-                                       choices = c("Class 2" = "class_2", 
-                                                   "Class 3" = "class_3",
-                                                   "Class 4" = "class_4",
-                                                   "Class 5" = "class_5",
-                                                   "Class 6" = "class_6",
-                                                   "Class 7" = "class_7")),
-                           actionButton("show_help", "Show User Guide")
-                         ),
-                         mainPanel(
-                           plotlyOutput("heatmapPlot", width = "100%", height = "650px"),
-                           dataTableOutput("pValueTable")  # Use dataTableOutput for DT::renderDataTable #shows the table
-                         )
+                     fluidRow(
+                       column(width = 12,
+                              actionButton("run_heatmap", "Run Heatmap") # button to trigger data manipulation and plot
+                       ),
+                       column(width = 12,
+                              plotOutput("heatmapPlot") # output for the heatmap plot
                        )
-                     ),
+                     )
             ),
+            
+            # ui.R
+            tabPanel("Debug heatmap",
+                     fluidRow(
+                       column(width = 12,
+                              # Now we're using a UI output to bring the value of debugMode to the frontend
+                              uiOutput("debugMode"),
+                              verbatimTextOutput("classDataDebug")
+                       )
+                     )
+            ),
+            
+            
+            
+                   
+            
             tabPanel("Feature drift",
               fluidRow(
                 column(3, box(width = NULL, DTOutput("dt_drift_panel"))),
