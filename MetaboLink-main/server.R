@@ -948,6 +948,65 @@ shinyServer(function(session, input, output) {
     }
   })
 
+  #Heatmap
+  
+  #First classification of the classes. 
+  reactive_class_data <- reactive({
+    # Retrieve the active sequence and data based on the active file
+    sequence <- rv$sequence[[rv$activeFile]]
+    data <- rv$data[[rv$activeFile]]
+    
+    # Assuming the first column of 'sequence' contains identifiers that match with the column names of 'data'
+    # And that the fourth column of 'sequence' contains the class information
+    sample_identifiers <- rownames(sequence)[sequence[, "labels"] == "Sample"]
+    groups <- sequence[sample_identifiers, "class"]
+    names <- sample_identifiers
+    
+    # Assuming the first column of 'sequence' contains the actual sample identifiers like "Eva_pos_06", "Eva_pos_07", etc.
+    # Extract these identifiers where the 'labels' column is "Sample"
+    sample_identifiers <- sequence[sequence$labels == "Sample", 1]
+    
+    # Extract the class information for these samples from the 'class' column
+    groups <- sequence[sequence$labels == "Sample", "class"]
+    
+    # Assuming that the first column of 'data' is the one you want to include in 'sample_data'
+    first_column <- data[, 1, drop = FALSE]  # Extract the first column without dropping to a vector
+    
+    # Combine the first column with the rest of 'sample_data'
+    sample_data <- cbind(first_column, data[, sample_identifiers, drop = FALSE])
+    
+    # Now 'sample_data' should contain only the columns for samples, and 'groups' contains the class of each sample.
+    
+    
+    # Initialize an empty list to store the sample names by group
+    grouped_samples <- list()
+    
+    # Get unique groups from the 'class' column in 'sequence'
+    unique_groups <- unique(sequence[sequence$labels == "Sample", "class"])
+    
+    # Iterate over each group to get the corresponding sample names
+    for (group in unique_groups) {
+      # Ensure the group is not NA and exists in the sequence dataset
+      if (!is.na(group) && group %in% sequence$class) {
+        # Get the sample names for the current group
+        samples_in_group <- sequence[sequence$class == group & sequence$labels == "Sample", 1]
+        
+        # Add the sample names to the list, named by their group
+        grouped_samples[[paste("group", group)]] <- samples_in_group
+      }
+    }
+  }
+  )
+  
+  # 'grouped_samples' is now a list with elements named by group number, each containing the sample names of that group
+  
+
+  
+  
+  
+  
+  
+  
   observeEvent(input$drift_1, {
     rv$drift_plot_select <- 1
   })

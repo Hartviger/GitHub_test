@@ -13,7 +13,7 @@ seq <- read.csv("seq_data_1.csv")
 #Check the data
 #View(lab_dataset)
 #View(seq)
-
+set.seed(123)
 
 #string manipulating 
 #Removes all other than name and length: going from CAR 14:1'CAR'[M+H]+ to CAR 14:1
@@ -204,6 +204,7 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output, session) {
   
+  set.seed(123)
   current_data <- reactiveVal(lab_dataset)
   
   observeEvent(input$dataset, {
